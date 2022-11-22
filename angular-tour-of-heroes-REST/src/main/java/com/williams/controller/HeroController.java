@@ -1,8 +1,10 @@
 package com.williams.controller;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.williams.repos.HeroRepository;
 import org.springframework.beans
         .factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,62 +15,106 @@ import org.springframework.web.servlet
         .support.ServletUriComponentsBuilder;
 import java.util.stream.*;
 
-// Import the above-defined classes
-// to use the properties of those
-// classes
 
 import com.williams.model.Hero;
-import com.williams.data.HeroDAO;
-import com.williams.repo.Heroes;
 
-// REST Controller
+
 @RestController
 @RequestMapping("/heroes")
 @CrossOrigin(origins = "http://localhost:4200")
 
 public class HeroController {
 
-    @Autowired
-    private HeroDAO heroDAO;
+//    private List<Hero> heroes = generateHeroes();
 
-    // Implementing a GET method
-    // to get the list of all
-    // the employees
+    @Autowired
+    HeroRepository heroRepository;
+
 
     @GetMapping
-    public List<Hero> getHeroes()
-    {
-
-        return heroDAO.getAllHeroes().getHeroList();
+    public ResponseEntity<List<Hero>> getHeroes() {
+    //    var heroes = heroRepository.findAll();
+        var heroes = heroRepository.searchHeroByName("stick");
+        return new ResponseEntity<>(heroes, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public Hero getHeroById(@PathVariable int id) {
-        return heroDAO.getAllHeroes().getHeroList().stream().filter(h -> h.getId() == id).findAny().orElse(null);
+    public ResponseEntity<Hero> getHeroById(@PathVariable int id) {
+//        Hero hero = heroes.stream()
+//                .filter(h -> h.getId() == id)
+//                .findAny()
+//                .orElse(null);
+        var hero = heroRepository.findById(id);
+        if(hero.isPresent()) {
+            return new ResponseEntity<>(hero.get(), HttpStatus.OK);
+        }
+        return ResponseEntity.notFound().build();
+
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity deleteHeroById(@PathVariable int id) {
+        if (heroRepository.existsById(id)) {
+            heroRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping
+    public ResponseEntity updateHero(@RequestBody Hero edited) {
+//        Hero oldHero = heroes.stream()
+//                .filter(h -> h.getId() == edited.getId())
+//                .findFirst()
+//                .orElse(null);
+//        if (oldHero != null) {
+//            int index = heroes.indexOf(oldHero);
+//            heroes.set(index, edited);
+//            return new ResponseEntity<>(HttpStatus.OK);
+//        }
+        if (heroRepository.existsById(edited.getId())) {
+            heroRepository.saveAndFlush(edited);
+            return ResponseEntity.noContent().build();
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+
     }
 
     @PostMapping
-    public ResponseEntity<Object> addHero(
-            @RequestBody Hero hero)
-    {
-        Integer id
-                = heroDAO
-                .getAllHeroes()
-                .getHeroList()
-                .size()
-                + 1;
-        hero.setId(id);
+    public ResponseEntity<Hero> addHero(@RequestBody Hero toAdd) {
+//        int maxId = heroes.stream().mapToInt(h->h.getId()).max().orElse(0);
+//        toAdd.setId(maxId+1);
+//        heroes.add(toAdd);
 
-        heroDAO.addHero(hero);
-
-        //URI location
-//                = ServletUriComponentsBuilder
-//                .fromCurrentRequest()
-//                .path("/{id}")
-//                .buildAndExpand(hero.getId())
-//                .toUri();
-        return new ResponseEntity<>(hero, HttpStatus.CREATED);
+        var newHero = heroRepository.saveAndFlush(toAdd);
+        return new ResponseEntity<>(newHero, HttpStatus.CREATED);
     }
+
+
+
+    private List<Hero> generateHeroes() {
+        List<Hero> heroes = new ArrayList<>();
+
+        heroes.add(new Hero(11, "Superman"));
+        heroes.add(new Hero(12, "Green Lantern"));
+        heroes.add(new Hero(13, "Wonder Woman"));
+        heroes.add(new Hero(14, "Wolverine"));
+        heroes.add(new Hero(15, "Dr. Nice"));
+        heroes.add(new Hero(16, "Bombasto"));
+        heroes.add(new Hero(17, "Celeritas"));
+        heroes.add(new Hero(18, "Magneta"));
+        heroes.add(new Hero(19, "RubberMan"));
+        heroes.add(new Hero(20, "Dynama"));
+        heroes.add(new Hero(21, "Dr. IQ"));
+        heroes.add(new Hero(23, "Magma"));
+        heroes.add(new Hero(24, "Cat Woman"));
+
+
+        return heroes;
+    }
+
 
 
 }

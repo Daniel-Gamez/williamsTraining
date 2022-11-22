@@ -18,6 +18,11 @@ export class HeroesComponent implements OnInit {
   //   this.messageService.add(`Heroes: Select a Hero ID = ${hero.id}`)
   // }
 
+  deleteHero(hero: Hero){
+    this.heroService.deleteHero(hero).subscribe(_ => this.heroes = this.heroes.filter(h=>h.id!==hero.id))
+
+  }
+
   constructor(private heroService: HeroService) { }
   // constructor(private heroService: HeroService , private messageService: MessageService) { }
 
